@@ -1,0 +1,34 @@
+---
+- name: Deploy NGINX app
+  hosts: My-hosts
+  become: yes
+
+  vars:
+    src_dir: [Source Directory]        # /path/to/src_dir of the current host.
+    dest_dir: [Destination Directory]  # /path/to/dest_dir of the remote My-hosts.
+
+  tasks:
+    - name: Create Destination Directory
+      file:
+       path: "{{ dest_dir }}/source"
+       state: directory
+       recurse: yes
+
+    - name: Copy Dockerfile to host
+      copy:
+       src: "{{ src_dir }}/Dockerfile"
+       dest: "{{ dest_dir }}"
+
+    - name: Copy Application to host
+      copy:
+       src: "{{ src_dir }}/NGINX/"
+       dest: "{{ dest_dir }}/source/"
+
+    - name: Make sure that the current directory is {{ dest_dir }}
+      command: cd {{ dest_dir }}
+
+    - name: Build Docker Image
+      command: docker build --rm -t NGINX "{{ dest_dir }}/Dockerfile" "{{ dest_dir }}"
+
+    - name: Run Docker Container
+      command: docker run -d --name helloworld -p 8080:8080 NGINX:test
